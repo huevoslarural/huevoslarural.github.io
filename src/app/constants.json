@@ -1,0 +1,23 @@
+{
+    "logos": {
+        "favicon": "https://raw.githubusercontent.com/hueverialarural/media/main/Logos/favicon_03_noBG.png"
+    },
+    "colorMarca": "#ffbf00",
+    "main_domain": "https://www.hueverialarural.github.io/",
+    "contacto": {
+        "telefono_string": "+503 69893085",
+        "telefono": "tel:+50369893085",
+        "whatsapp": "https://wa.me/50369893085",
+        "email_string": "hueverialarural@gmail.com",
+        "email": "mailto:hueverialarural@gmail.com",
+        "ubicacion":"Chinameca, San Miguel, El Salvador",
+        "horarios_atencion":"Lunes a Sábado: 6:00 AM - 6:00 PM"
+    },
+    "SEO": {
+        "google_search_console_id": "XXXXXXXXXXXXXXXXXXXXXXX"
+    },
+    "asogelabs_json": "https://raw.githubusercontent.com/asogelabs/media/main/asogelabs_techs.json",
+    "contact_email": "asogelabs@gmail.com",
+    "android_package": "com.asogelabs.app",
+    "android_appname": "Asoge Labs"
+}
