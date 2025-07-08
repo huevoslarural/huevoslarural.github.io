@@ -1,22 +1,10 @@
 {
     "precios": {
-        "mayoreo": {
-            "precio_caja_mediano": "$42.00",
-            "precio_caja_grande": "$48.00",
-            "precio_caja_extragrande": "$54.00",
-            "precio_caja_jumbo": "$60.00"
-        },
-        "menudeo": {
-            "precio_carton_mediano": "$3.50",
-            "precio_carton_grande": "$4.00",
-            "precio_carton_extragrande": "$4.50",
-            "precio_carton_jumbo": "$5.00"
+        "cajas":{
+            "tam_mediano": 38.00,
+            "tam_grande": 40.00,
+            "tam_extragrande": null,
+            "tam_jumbo": null
         }
-    },
-    "stock": {
-        "cartones_tam_mediano": 20,
-        "cartones_tam_grande": 120,
-        "cartones_tam_extragrande": 41,
-        "cartones_tam_jumbo": 18
     }
 }

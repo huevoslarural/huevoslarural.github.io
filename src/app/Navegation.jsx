@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaBars, FaTimes, FaEgg } from 'react-icons/fa';
+import { FaBars, FaTimes } from 'react-icons/fa';
+
+import Data from "./constants.json";
+import './Utils/Loaders/CSS/loader_02.css';
 
 
 
@@ -14,6 +17,40 @@ function Navegation() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     // Estado para controlar el scroll y cambiar el estilo del navbar
     const [isScrolled, setIsScrolled] = useState(false);
+    // Estado para manejar la carga del logo
+    const [logoLoaded, setLogoLoaded] = useState(false);
+    // Estado para manejar el loader
+    const [isLoading, setIsLoading] = useState(true);
+    // Estado para manejar errores de carga
+    const [error, setError] = useState(null);
+
+    // Efecto para hacer fetch del logo desde Data.logos.favicon
+    useEffect(() => {
+        const fetchLogo = async () => {
+            try {
+                setIsLoading(true);
+                setError(null);
+
+                // Precargar el logo desde la URL del JSON
+                const img = new Image();
+                img.onload = () => {
+                    setLogoLoaded(true);
+                    setIsLoading(false);
+                };
+                img.onerror = () => {
+                    setError('Error al cargar el logo');
+                    setIsLoading(false);
+                };
+                img.src = Data.logos.favicon;
+
+            } catch (err) {
+                setError(err.message);
+                setIsLoading(false);
+            }
+        };
+
+        fetchLogo();
+    }, []);
 
     // Efecto para detectar el scroll y cambiar el estilo del navbar
     useEffect(() => {
@@ -26,6 +63,11 @@ function Navegation() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Efecto para simular el loader inicial
+    useEffect(() => {
+        // Removido el timer ya que ahora usamos el fetching real
+    }, []);
+
     // Función para alternar el menú móvil
     const toggleMobileMenu = () => {
         setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -36,10 +78,16 @@ function Navegation() {
         setIsMobileMenuOpen(false);
     };
 
+    // Función para manejar la carga del logo (ya no es necesaria)
+    const handleLogoLoad = () => {
+        // Esta función ya no es necesaria ya que manejamos la carga en el useEffect
+    };
+
     // Enlaces de navegación
     const navigationLinks = [
         { href: '/contacto', label: 'Contacto', isPrimary: false },
         { href: '/info', label: 'Sobre nosotros', isPrimary: false },
+        { href: '/educacion', label: 'Educación gratis', isPrimary: false },
         { href: '/ordenar', label: 'Ordenar ahora', isPrimary: true }
     ];
 
@@ -69,23 +117,83 @@ function Navegation() {
         open: { opacity: 1, x: 0 }
     };
 
+    // Función para calcular el scale automático del loader
+    const calculateLoaderScale = () => {
+        // Dimensiones del contenedor circular
+        const containerSize = 40; // 10 * 4 (w-10) para mobile, ajustaremos para desktop
+        const containerSizeDesktop = 48; // 12 * 4 (w-12) para desktop
+
+        // Dimensiones base del loader (según tu CSS)
+        const loaderWidth = 120; // width del loader
+        const loaderHeight = 70; // height aproximado considerando el ::after
+
+        // Calcular el scale necesario para que quepa completamente
+        const scaleForWidth = containerSize / loaderWidth;
+        const scaleForHeight = containerSize / loaderHeight;
+        const scaleMobile = Math.min(scaleForWidth, scaleForHeight) * 0.8; // 0.8 para dar margen
+
+        const scaleForWidthDesktop = containerSizeDesktop / loaderWidth;
+        const scaleForHeightDesktop = containerSizeDesktop / loaderHeight;
+        const scaleDesktop = Math.min(scaleForWidthDesktop, scaleForHeightDesktop) * 0.8;
+
+        return { mobile: scaleMobile, desktop: scaleDesktop };
+    };
+
+    // Componente de loader personalizado con escalado automático
+    const LogoLoader = ({ isMobile = true }) => {
+        const scales = calculateLoaderScale();
+        const scale = isMobile ? scales.mobile : scales.desktop;
+
+        return (
+            <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center overflow-hidden">
+                <div
+                    className="loader"
+                    style={{
+                        transform: `scale(${scale})`,
+                        transformOrigin: 'center'
+                    }}
+                ></div>
+            </div>
+        );
+    };
+
+    // Componente de error para el logo
+    const LogoError = () => (
+        <div className="w-10 h-10 md:w-12 md:h-12 bg-red-100 rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 md:w-8 md:h-8 bg-red-300 rounded-full flex items-center justify-center">
+                <span className="text-red-600 text-xs font-bold">!</span>
+            </div>
+        </div>
+    );
+
     return (
-        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-            isScrolled 
-                ? 'bg-white/95 backdrop-blur-sm shadow-lg border-b border-amber-200' 
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+                ? 'bg-white/95 backdrop-blur-sm shadow-lg border-b border-amber-200'
                 : 'bg-white/90 backdrop-blur-sm'
-        }`}>
+            }`}>
             <div className="container mx-auto px-4 md:px-6">
                 <div className="flex items-center justify-between h-16 md:h-20">
-                    
+
                     {/* Logo y nombre de la empresa */}
                     <Link href="/" className="flex items-center gap-3 group" onClick={closeMobileMenu}>
-                        <motion.div 
-                            className="w-10 h-10 md:w-12 md:h-12 bg-amber-500 rounded-full flex items-center justify-center group-hover:bg-amber-600 transition-colors duration-300"
+                        <motion.div
+                            className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-white shadow-md group-hover:shadow-lg transition-shadow duration-300"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                         >
-                            <FaEgg className="text-white text-lg md:text-xl" />
+                            {isLoading ? (
+                                <LogoLoader isMobile={true} />
+                            ) : error ? (
+                                <LogoError />
+                            ) : logoLoaded ? (
+                                <img
+                                    src={Data.logos.favicon}
+                                    alt="Huevos La Rural Logo"
+                                    className="w-full h-full object-contain"
+                                />
+                            ) : (
+                                <LogoLoader isMobile={true} />
+                            )}
                         </motion.div>
                         <div className="hidden sm:block">
                             <h1 className="text-lg md:text-xl font-bold text-amber-800 group-hover:text-amber-900 transition-colors duration-300">
@@ -102,11 +210,10 @@ function Navegation() {
                         {navigationLinks.map((link, index) => (
                             <Link key={index} href={link.href}>
                                 <motion.div
-                                    className={`px-4 lg:px-6 py-2 rounded-lg font-medium transition-all duration-300 ${
-                                        link.isPrimary
+                                    className={`px-4 lg:px-6 py-2 rounded-lg font-medium transition-all duration-300 ${link.isPrimary
                                             ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-lg hover:shadow-xl'
                                             : 'text-amber-800 hover:text-amber-900 hover:bg-amber-50'
-                                    }`}
+                                        }`}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     role="button"
@@ -158,11 +265,10 @@ function Navegation() {
                                     >
                                         <Link href={link.href} onClick={closeMobileMenu}>
                                             <div
-                                                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
-                                                    link.isPrimary
+                                                className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-300 ${link.isPrimary
                                                         ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-md'
                                                         : 'text-amber-800 hover:text-amber-900 hover:bg-amber-50'
-                                                }`}
+                                                    }`}
                                                 role="button"
                                                 aria-label={`Ir a ${link.label}`}
                                             >

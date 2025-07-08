@@ -13,8 +13,14 @@ import {
     FaClock,
     FaDollarSign,
     FaStore,
-    FaUsers
+    FaUsers,
+    FaTimes,
+    FaBox
 } from 'react-icons/fa';
+
+
+
+
 
 function StockSimple() {
     // Estados para el manejo de datos y carga
@@ -65,20 +71,14 @@ function StockSimple() {
             if (!data) {
                 console.warn('Usando datos mock temporales debido a error de conexión:', lastError?.message);
 
-                // Datos de ejemplo basados en tu estructura
+                // Datos de ejemplo basados en la nueva estructura
                 data = {
                     precios: {
-                        mayoreo: {
-                            precio_caja_mediano: "$42.00",
-                            precio_caja_grande: "$48.00",
-                            precio_caja_extragrande: "$54.00",
-                            precio_caja_jumbo: "$60.00"
-                        },
-                        menudeo: {
-                            precio_carton_mediano: "$3.50",
-                            precio_carton_grande: "$4.00",
-                            precio_carton_extragrande: "$4.50",
-                            precio_carton_jumbo: "$5.00"
+                        cajas: {
+                            tam_mediano: 38.00,
+                            tam_grande: 40.00,
+                            tam_extragrande: null,
+                            tam_jumbo: null
                         }
                     }
                 };
@@ -88,11 +88,11 @@ function StockSimple() {
             }
 
             // Verificar que los datos tengan la estructura esperada
-            if (!data || !data.precios) {
-                throw new Error('Estructura de datos inválida: falta la propiedad "precios"');
+            if (!data || !data.precios || !data.precios.cajas) {
+                throw new Error('Estructura de datos inválida: falta la propiedad "precios.cajas"');
             }
 
-            setPreciosData(data.precios);
+            setPreciosData(data.precios.cajas);
             setLastUpdated(new Date());
 
         } catch (err) {
@@ -113,9 +113,33 @@ function StockSimple() {
         return () => clearInterval(interval);
     }, []);
 
+    // Función para calcular precio por cartón (dividir precio de caja entre 12)
+    const calcularPrecioCarton = (precioCaja) => {
+        if (precioCaja === null || precioCaja === undefined) {
+            return null;
+        }
+        return (precioCaja / 12);
+    };
+
+    // Función para calcular precio por media caja (dividir precio de caja entre 2)
+    const calcularPrecioMediaCaja = (precioCaja) => {
+        if (precioCaja === null || precioCaja === undefined) {
+            return null;
+        }
+        return (precioCaja / 2);
+    };
+
+    // Función para formatear precio como string con símbolo de dólar
+    const formatearPrecio = (precio) => {
+        if (precio === null || precio === undefined) {
+            return null;
+        }
+        return `$${precio.toFixed(2)}`;
+    };
+
     // Configuración de información de tamaños con gradientes y mejor diseño
     const sizeInfo = {
-        mediano: {
+        tam_mediano: {
             label: 'Mediano',
             icon: '🥚',
             gradient: 'from-blue-400 to-blue-600',
@@ -123,9 +147,9 @@ function StockSimple() {
             borderColor: 'border-blue-200',
             textColor: 'text-blue-800',
             iconBg: 'bg-blue-500',
-            description: 'Ideal para familias pequeñas'
+            description: 'Ideal para familias'
         },
-        grande: {
+        tam_grande: {
             label: 'Grande',
             icon: '🥚',
             gradient: 'from-green-400 to-green-600',
@@ -135,7 +159,7 @@ function StockSimple() {
             iconBg: 'bg-green-500',
             description: 'El tamaño más popular'
         },
-        extragrande: {
+        tam_extragrande: {
             label: 'Extra Grande',
             icon: '🥚',
             gradient: 'from-orange-400 to-orange-600',
@@ -145,7 +169,7 @@ function StockSimple() {
             iconBg: 'bg-orange-500',
             description: 'Para los más exigentes'
         },
-        jumbo: {
+        tam_jumbo: {
             label: 'Jumbo',
             icon: '🥚',
             gradient: 'from-red-400 to-red-600',
@@ -188,69 +212,131 @@ function StockSimple() {
     };
 
     // Componente de tarjeta de precios individual
-    const PrecioCard = ({ size, precioMayoreo, precioMenudeo, info, index }) => {
+    const PrecioCard = ({ size, precioCaja, info, index }) => {
+        // Verificar si el producto está agotado (precio null)
+        const estaAgotado = precioCaja === null || precioCaja === undefined;
+
+        // Calcular precios si no está agotado
+        const precioCarton = estaAgotado ? null : calcularPrecioCarton(precioCaja);
+        const precioMediaCaja = estaAgotado ? null : calcularPrecioMediaCaja(precioCaja);
+
+        // Formatear precios
+        const precioCartonFormateado = estaAgotado ? null : formatearPrecio(precioCarton);
+        const precioMediaCajaFormateado = estaAgotado ? null : formatearPrecio(precioMediaCaja);
+        const precioCajaFormateado = estaAgotado ? null : formatearPrecio(precioCaja);
+
         return (
             <motion.div
                 variants={slideIn}
-                whileHover={{
+                whileHover={!estaAgotado ? {
                     scale: 1.02,
                     boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-                }}
-                className={`relative overflow-hidden p-6 rounded-2xl border-2 ${info.bgColor} ${info.borderColor} shadow-lg hover:shadow-xl transition-all duration-500 group`}
+                } : {}}
+                className={`relative overflow-hidden p-6 rounded-2xl border-2 ${estaAgotado
+                    ? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200'
+                    : `${info.bgColor} ${info.borderColor}`
+                    } shadow-lg hover:shadow-xl transition-all duration-500 group ${estaAgotado ? 'opacity-75' : ''
+                    }`}
             >
-                {/* Efecto de brillo sutil */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                {/* Indicador de agotado */}
+                {estaAgotado && (
+                    <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                        <FaTimes className="text-xs" />
+                        AGOTADO
+                    </div>
+                )}
+
+                {/* Efecto de brillo sutil - solo si no está agotado */}
+                {!estaAgotado && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-10 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
+                )}
 
                 {/* Header de la tarjeta */}
                 <div className="flex items-center justify-center mb-6">
                     <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl ${info.iconBg} flex items-center justify-center shadow-lg`}>
+                        <div className={`w-12 h-12 rounded-xl ${estaAgotado ? 'bg-gray-400' : info.iconBg
+                            } flex items-center justify-center shadow-lg`}>
                             <span className="text-white text-2xl">{info.icon}</span>
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-gray-800">{info.label}</h3>
-                            <p className="text-sm text-gray-600">{info.description}</p>
+                            <h3 className={`text-xl font-bold ${estaAgotado ? 'text-gray-600' : 'text-gray-800'
+                                }`}>{info.label}</h3>
+                            <p className={`text-sm ${estaAgotado ? 'text-gray-500' : 'text-gray-600'
+                                }`}>{info.description}</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Precios por tipo de venta */}
+                {/* Precios por tipo de venta o mensaje de agotado */}
                 <div className="space-y-4">
-                    {/* Precio Mayoreo */}
-                    <div className="bg-white/70 rounded-xl p-4 backdrop-blur-sm border border-white/50">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                    <FaUsers className="text-white text-sm" />
+                    {estaAgotado ? (
+                        // Mensaje de producto agotado
+                        <div className="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <FaTimes className="text-white text-2xl" />
                                 </div>
-                                <div>
-                                    <p className="font-bold text-purple-700">MAYOREO</p>
-                                    <p className="text-xs text-purple-600">Por caja (12 cartones)</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <span className="text-2xl font-black text-purple-800">{precioMayoreo}</span>
+                                <h4 className="text-xl font-bold text-red-700 mb-2">Producto Agotado</h4>
+                                <p className="text-red-600">Este tamaño no está disponible actualmente</p>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            {/* Precio por cartón */}
+                            <div className="bg-white/70 rounded-xl p-4 backdrop-blur-sm border border-white/50">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
+                                            <FaEgg className="text-white text-sm" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-teal-700">Precio por cartón</p>
+                                            <p className="text-xs text-teal-600">Contiene un cartón (30 huevos)</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-2xl font-black text-teal-800">{precioCartonFormateado}</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                    {/* Precio Menudeo */}
-                    <div className="bg-white/70 rounded-xl p-4 backdrop-blur-sm border border-white/50">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
-                                    <FaStore className="text-white text-sm" />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-amber-700">MENUDEO</p>
-                                    <p className="text-xs text-amber-600">Por cartón (30 huevos)</p>
+                            {/* Precio por media caja */}
+                            <div className="bg-white/70 rounded-xl p-4 backdrop-blur-sm border border-white/50">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
+                                            <FaBox className="text-white text-sm" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-amber-700">Precio por media caja</p>
+                                            <p className="text-xs text-amber-600">Contiene 6 cartones</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-2xl font-black text-amber-800">{precioMediaCajaFormateado}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <span className="text-2xl font-black text-amber-800">{precioMenudeo}</span>
+
+                            {/* Precio por caja completa */}
+                            <div className="bg-white/70 rounded-xl p-4 backdrop-blur-sm border border-white/50">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                            <FaBoxOpen className="text-white text-sm" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-purple-700">Precio por caja</p>
+                                            <p className="text-xs text-purple-600">Contiene 12 cartones</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-2xl font-black text-purple-800">{precioCajaFormateado}</span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
+                        </>
+                    )}
                 </div>
             </motion.div>
         );
@@ -277,7 +363,7 @@ function StockSimple() {
                     </h1>
 
                     <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto leading-relaxed">
-                        Consulta nuestros precios actualizados para mayoreo y menudeo
+                        Consulta nuestros precios actualizados para diferentes cantidades
                     </p>
                 </motion.div>
 
@@ -324,16 +410,14 @@ function StockSimple() {
                             variants={staggerContainer}
                             className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-8 mb-12"
                         >
-                            {['mediano', 'grande', 'extragrande', 'jumbo'].map((size, index) => {
-                                const precioMayoreo = preciosData.mayoreo[`precio_caja_${size}`];
-                                const precioMenudeo = preciosData.menudeo[`precio_carton_${size}`];
-                                
+                            {['tam_mediano', 'tam_grande', 'tam_extragrande', 'tam_jumbo'].map((size, index) => {
+                                const precioCaja = preciosData[size];
+
                                 return (
                                     <PrecioCard
                                         key={size}
                                         size={size}
-                                        precioMayoreo={precioMayoreo}
-                                        precioMenudeo={precioMenudeo}
+                                        precioCaja={precioCaja}
                                         info={sizeInfo[size]}
                                         index={index}
                                     />
@@ -355,7 +439,7 @@ function StockSimple() {
                                 </h3>
                             </div>
 
-                            {/* Conversiones visuales mejoradas */}
+                            {/* Conversiones visuales actualizadas */}
                             <div className="max-w-4xl mx-auto">
                                 {/* Primera fila: Caja → Cartones */}
                                 <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-200">
@@ -394,15 +478,15 @@ function StockSimple() {
                                     </div>
                                 </div>
 
-                                {/* Segunda fila: Cartón → Huevos */}
+                                {/* Segunda fila: Media caja → Cartones */}
                                 <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200">
                                     <div className="flex items-center gap-3">
                                         <div className="w-16 h-16 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg">
-                                            <FaBoxOpen className="text-white text-xl" />
+                                            <FaBox className="text-white text-xl" />
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-3xl font-black text-amber-700">1</p>
-                                            <p className="text-sm font-semibold text-amber-600">CARTÓN</p>
+                                            <p className="text-3xl font-black text-amber-700">1/2</p>
+                                            <p className="text-sm font-semibold text-amber-600">CAJA</p>
                                         </div>
                                     </div>
 
@@ -422,11 +506,48 @@ function StockSimple() {
 
                                     <div className="flex items-center gap-3">
                                         <div className="w-16 h-16 bg-amber-600 rounded-xl flex items-center justify-center shadow-lg">
+                                            <FaBoxOpen className="text-white text-xl" />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-3xl font-black text-amber-700">6</p>
+                                            <p className="text-sm font-semibold text-amber-600">CARTONES</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Tercera fila: Cartón → Huevos */}
+                                <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-8 p-6 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl border border-teal-200">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-16 h-16 bg-teal-500 rounded-xl flex items-center justify-center shadow-lg">
+                                            <FaBoxOpen className="text-white text-xl" />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-3xl font-black text-teal-700">1</p>
+                                            <p className="text-sm font-semibold text-teal-600">CARTÓN</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <div className="hidden md:block text-teal-400">
+                                            <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
+                                                <path d="M5 10H35M35 10L25 5M35 10L25 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        </div>
+                                        <div className="md:hidden text-teal-400 rotate-90">
+                                            <svg width="20" height="40" viewBox="0 0 20 40" fill="none">
+                                                <path d="M10 5V35M10 35L5 25M10 35L15 25" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        </div>
+                                        <span className="text-teal-600 font-bold text-lg">IGUAL A</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-16 h-16 bg-teal-600 rounded-xl flex items-center justify-center shadow-lg">
                                             <FaEgg className="text-white text-xl" />
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-3xl font-black text-amber-700">30</p>
-                                            <p className="text-sm font-semibold text-amber-600">HUEVOS</p>
+                                            <p className="text-3xl font-black text-teal-700">30</p>
+                                            <p className="text-sm font-semibold text-teal-600">HUEVOS</p>
                                         </div>
                                     </div>
                                 </div>
